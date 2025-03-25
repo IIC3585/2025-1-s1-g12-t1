@@ -21,6 +21,62 @@ const parseCSV = (csv) => [...parseCSVGenerator(csv)];
 const toCSV = (matrix) =>
   matrix.map(row => row.join(',')).join('\n');
 
+
+const splitInRows = (file) => file.split('\n').map(row => row.trim())
+const splitRowInCells = (row) => row.split(',').map(cell => cell.trim())
+
+/**
+* getRows: Convierte el contenido de un CSV (string) en un array de arrays. 
+* Cada array representa una fila y contiene las celdas de esa fila.
+ */
+const getRows = (file) => {
+  return splitInRows(file).map(row => splitRowInCells(row))
+};
+
+/**
+* rowsToFile: Convierte un array de arrays (de las filas) en el contenido de un CSV (string). 
+ */
+const rowsToFile = (rows) => {
+  return rows.map(row => row.join(', ')).join('\n')
+}
+
+/**
+* columnsToRows: Convierte un array de arrays, donde cada array representa una columna; en un array de arrays de las filas.
+ */
+const columnsToRows = (columns) => {
+  let column = columns[0]
+  return column.map((_, i) => columns.map(column => column[i])); // Por cada valor i de la columna (total de filas), retorna un array con los valores [i] de cada columna
+}
+
+function columnstorows(file) {
+  return rowsToFile(rowsToColumns(getRows(file)))
+}
+
+/**
+* rowsToColumns: Convierte un array de arrays, donde cada array representa una fila; en un array de arrays de las columnas.
+ */
+const rowsToColumns = (rows) => {
+  let row = rows[0]
+  return row.map((_, i) => rows.map(row => row[i]))
+}
+
+function rowstocolumns(file) {
+  return rowsToFile(rowsToColumns(getRows(file)))
+}
+
+/**
+ * swap (file, n, m) - hace un swap de las columnas n y m
+ */
+function swap(file, n, m) {
+  n--; m--;
+  let columns = rowsToColumns(getRows(file));
+  let aux = columns[m];
+  columns[m] = columns[n];
+  columns[n] = aux;
+  return rowsToFile(columnsToRows(columns));
+}
+
+
 /**
  * insertcolumn: Inserta una columna en el CSV en la posición indicada.
  * 
@@ -65,6 +121,9 @@ const tohtmltable = _.curry((csv) =>
 );
 
 module.exports = {
+  columnstorows,
+  rowstocolumns,
+  swap,
   insertcolumn,
   tohtmltable
 };
