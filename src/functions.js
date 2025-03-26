@@ -64,7 +64,72 @@ const tohtmltable = _.curry((csv) =>
     .value()
 );
 
+/**
+ * rowdelete: Elimina una fila del CSV en la posición indicada.
+ * 
+ * Se implementa de forma curried para permitir partial evaluation y se utiliza
+ * lodash chaining para componer la transformación:
+ * 
+ * 1. Transforma el CSV a matriz usando parseCSV.
+ * 2. Filtra la fila que se desea eliminar.
+ * 3. Convierte la matriz resultante a CSV.
+ */
+const rowdelete = _.curry((csv, n) =>
+  _.chain(csv)
+    .thru(parseCSV)
+    .filter((_, i) => i !== n)  // Filtra todas las filas excepto la fila n
+    .thru(toCSV)
+    .value()
+);
+
+/**
+ * columndelete: Elimina una columna del CSV en la posición indicada.
+ * 
+ * Se implementa de forma curried para permitir partial evaluation y se utiliza
+ * lodash chaining para componer la transformación:
+ * 
+ * 1. Transforma el CSV a matriz usando parseCSV.
+ * 2. Mapea cada fila eliminando la columna específica.
+ * 3. Convierte la matriz resultante a CSV.
+ */
+const columndelete = _.curry((csv, n) =>
+  _.chain(csv)
+    .thru(parseCSV)
+    .map(row => [
+      ...row.slice(0, n),       // toma desde el inicio hasta la posición n (exclusivo)
+      ...row.slice(n + 1)       // toma desde n+1 hasta el final, saltando la columna n
+    ])
+    .thru(toCSV)
+    .value()
+);
+
+/**
+ * insertrow: Inserta una fila en el CSV después de la posición indicada.
+ * 
+ * Se implementa de forma curried para permitir partial evaluation y se utiliza
+ * lodash chaining para componer la transformación:
+ * 
+ * 1. Transforma el CSV a matriz usando parseCSV.
+ * 2. Divide la matriz en dos partes: antes y después de la posición n.
+ * 3. Concatena las partes con la nueva fila en el medio.
+ * 4. Convierte la matriz resultante a CSV.
+ */
+const insertrow = _.curry((csv, n, row) =>
+  _.chain(csv)
+    .thru(parseCSV)
+    .thru(matrix => [
+      ...matrix.slice(0, n + 1),  // Toma desde el inicio hasta la posición n (inclusive)
+      row,                        // Inserta la nueva fila
+      ...matrix.slice(n + 1)      // Toma desde n+1 hasta el final
+    ])
+    .thru(toCSV)
+    .value()
+);
+
 module.exports = {
   insertcolumn,
-  tohtmltable
+  tohtmltable,
+  rowdelete,
+  columndelete,
+  insertrow
 };
