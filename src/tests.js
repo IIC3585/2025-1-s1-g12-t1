@@ -24,16 +24,16 @@ function getTestCases(dataCSV) {
       {
         name: '1. rowsToColumns',
         fn: rowsToColumns,
-        input: [dataCSV],
+        input: [`Pedro,Potter,Vainilla\nJuan,Weasley,Chocolate\nDiego,Granger,Aliado`],
         outputType: 'csv',
         expected: `Pedro,Juan,Diego\nPotter,Weasley,Granger\nVainilla,Chocolate,Aliado`
       },
       {
-        name: '2. columnsToRows(rowsToColumns(dataCSV))',
+        name: '2. columnsToRows',
         fn: columnsToRows,
-        input: [rowsToColumns(dataCSV)],
+        input: [`Pedro,Juan,Diego\nPotter,Weasley,Granger\nVainilla,Chocolate,Aliado`],
         outputType: 'csv',
-        expected: dataCSV
+        expected: `Pedro,Potter,Vainilla\nJuan,Weasley,Chocolate\nDiego,Granger,Aliado`
       },
       {
         name: '3. swap(1, 3)',

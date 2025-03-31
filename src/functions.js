@@ -1,4 +1,5 @@
-const { flow, curry, map, join, split, trim} = require('lodash/fp');
+const { flow, curry, map, join, split, trim } = require('lodash/fp');
+const _ = require('lodash');
 
 /* NOTAS:
     - Notar que un CSV es un string.
@@ -18,11 +19,14 @@ const toCSV = flow(map(join(',')), join('\n'));
 
 // Transposición de una matriz mediante zip
 const transpose = (matrix) => {
-  const maxLength = Math.max(0, ...matrix.map(row => row.length));
-  const padded = matrix.map(row =>
-    row.length >= maxLength ? row : [...row, ...Array(maxLength - row.length).fill('')]
-  );
-  return padded[0].map((_, colIndex) => padded.map(row => row[colIndex]));
+  const rowOrColLenght = matrix[0].length;
+  const hasSameLength = rowOrCol => rowOrCol.length === rowOrColLenght;
+  if (matrix.every(hasSameLength)) {
+    return _.zip(...matrix);
+  }
+  else {
+    throw new Error('Las filas o columnas no tienen la misma longitud');
+  }
 };
 
 // Intercambia columnas de lugar en un array de clearcolumnas.
