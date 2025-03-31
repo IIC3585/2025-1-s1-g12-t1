@@ -3,8 +3,7 @@ const { flow, curry, map, join, split, trim} = require('lodash/fp');
 /* NOTAS:
     - Notar que un CSV es un string.
     - La primera columna/fila, para efectos de input, es 1 y no 0.
-    - Las filas se separan por saltos de línea (\n) y las columnas por comas (,).
-*/
+    - Las filas se separan por saltos de línea (\n) y las columnas por comas (,). */
 
 /***************************** FUNCIONES AUXILIARES  *****************************/
 
@@ -72,7 +71,7 @@ const columnDelete = curry((csv, n) => flow(
   parseCSV,
   map(row => [
     ...row.slice(0, n - 1), // Toma desde el inicio hasta la posición n (exclusivo)
-    ...row.slice(n) // Toma desde n+1 hasta el final, saltando la columna n
+    ...row.slice(n)         // Toma desde n+1 hasta el final, saltando la columna n
   ]),
   toCSV
 )(csv));
@@ -82,7 +81,7 @@ const insertRow = curry((csv, n, newRow) => flow(
   parseCSV,
   matrix => [
     ...matrix.slice(0, n), // Toma desde el inicio hasta la posición n (inclusive)
-    newRow,                    // Inserta la nueva fila
+    newRow,                // Inserta la nueva fila
     ...matrix.slice(n)     // Toma desde n+1 hasta el final
   ],
   toCSV
@@ -92,9 +91,9 @@ const insertRow = curry((csv, n, newRow) => flow(
 const insertColumn = curry((csv, n, column) => flow(
   parseCSV,
   (rows) => rows.map((row, i) => [
-    ...row.slice(0, n - 1),
-    column[i] ?? '',
-    ...row.slice(n - 1)
+    ...row.slice(0, n - 1), // Toma desde el inicio hasta la posición n (exclusivo)
+    column[i] ?? '',        // Inserta el valor de la columna en la posición n
+    ...row.slice(n - 1)     // Toma desde n hasta el final
   ]),
   toCSV
 )(csv));
