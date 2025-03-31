@@ -61,7 +61,7 @@ function getTestCases(dataCSV) {
         fn: insertRow,
         input: [dataCSV, 2, ['Maria', 'Malfoy', 'Fresa']],
         outputType: 'csv',
-        expected: `Pedro,Potter,Vainilla\nJuan,Weasley,Chocolate\nMaria,Gonzalez,Fresa\nDiego,Granger,Aliado`
+        expected: `Pedro,Potter,Vainilla\nJuan,Weasley,Chocolate\nMaria,Malfoy,Fresa\nDiego,Granger,Aliado`
       },
       {
         name: '7. insertColumn-after(2)',
