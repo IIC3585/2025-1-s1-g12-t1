@@ -19,8 +19,8 @@ const toCSV = flow(map(join(',')), join('\n'));
 
 // Transposición de una matriz mediante zip
 const transpose = (matrix) => {
-  const rowOrColLenght = matrix[0].length;
-  const hasSameLength = rowOrCol => rowOrCol.length === rowOrColLenght;
+  const rowLenght = matrix[0].length;
+  const hasSameLength = row => row.length === rowLenght;
   if (matrix.every(hasSameLength)) {
     return _.zip(...matrix);
   }
