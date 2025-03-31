@@ -1,0 +1,23 @@
+{
+  "name": "t1",
+  "version": "1.0.0",
+  "description": "Este repositorio contiene la tarea I de Diseño Avanzado de Aplicaiones Web.",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IIC3585/2025-1-s1-g12-t1.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/IIC3585/2025-1-s1-g12-t1/issues"
+  },
+  "homepage": "https://github.com/IIC3585/2025-1-s1-g12-t1#readme",
+  "dependencies": {
+    "lodash": "^4.17.21"
+  }
+}
