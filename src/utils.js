@@ -2,7 +2,7 @@ const fs = require('fs');
 
 function openCSV(filePath) {
     try {
-        return fs.readFileSync(filePath, 'utf8');
+        return fs.readFileSync(filePath, 'utf8').trim();
     } catch (error) {
         console.error(`Error reading CSV file: ${error.message}`);
         return '';
@@ -13,28 +13,23 @@ function readFirstLines(csvData, numLines) {
     const lines = csvData.split('\n');
     const firstLines = lines.slice(0, numLines);
     const data = firstLines.join('\n');
-    console.log(`First ${numLines} lines of CSV)`);
+    console.log('\nA CONTINUACIÓN LA DATA ORIGINAL:')
     console.log('-------------------------');
-    console.log(data, '\n');
+    console.log(data);
+    console.log('-------------------------');
   }
 
-function saveDataToFile(filePath, data) {
+function saveDataToFile(data, fileName, outputType) {
     try {
+      const filePath = `./output/${fileName}.${outputType}`;
       fs.writeFileSync(filePath, data, 'utf8');
-      console.log(`Data saved to ${filePath}`);
     } catch (error) {
       console.error(`Error saving data to file: ${error.message}`);
     }
   }
 
-  function readStatus(f) {
-    console.log(`=> Función: ${f}`);
-    console.log('-------------------------');
-  }
-
-  module.exports = {
-    openCSV,
-    readFirstLines,
-    saveDataToFile,
-    readStatus
-  };
+module.exports = {
+  openCSV,
+  readFirstLines,
+  saveDataToFile
+};

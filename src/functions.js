@@ -1,194 +1,119 @@
-const _ = require('lodash');
+const { flow, curry, map, join, split, trim} = require('lodash/fp');
 
-/**
- * Generator: lee cada línea del CSV y la transforma en un array de celdas.
- */
-function* parseCSVGenerator(csv) {
-  const rows = csv.trim().split('\n');
-  for (const row of rows) {
-    yield row.split(',').map(cell => cell.trim());
-  }
-}
+/* NOTAS:
+    - Notar que un CSV es un string.
+    - La primera columna/fila, para efectos de input, es 1 y no 0.
+    - Las filas se separan por saltos de línea (\n) y las columnas por comas (,).
+*/
 
-/**
- * parseCSV: Convierte el CSV (string) en un array de arrays usando el generator.
- */
-const parseCSV = (csv) => [...parseCSVGenerator(csv)];
+/***************************** FUNCIONES AUXILIARES  *****************************/
 
-/**
- * toCSV: Convierte una matriz (array de arrays) a un string CSV.
- */
-const toCSV = (matrix) =>
-  matrix.map(row => row.join(',')).join('\n');
+// Convierte string a fila array. Ej: "1,2,3" => ["1", "2", "3"]
+const parseRow = flow(split(','), map(trim));
 
+// Convierte un CSV en una matriz (array de arrays).
+const parseCSV = flow(trim, split('\n'), map(parseRow));
 
-const splitInRows = (file) => file.split('\n').map(row => row.trim())
-const splitRowInCells = (row) => row.split(',').map(cell => cell.trim())
+// Convierte una matriz (array de arrays) a un CSV.
+const toCSV = flow(map(join(',')), join('\n'));
 
-/**
-* getRows: Convierte el contenido de un CSV (string) en un array de arrays. 
-* Cada array representa una fila y contiene las celdas de esa fila.
- */
-const getRows = (file) => {
-  return splitInRows(file).map(row => splitRowInCells(row))
+// Transposición de una matriz mediante zip
+const transpose = (matrix) => {
+  const maxLength = Math.max(0, ...matrix.map(row => row.length));
+  const padded = matrix.map(row =>
+    row.length >= maxLength ? row : [...row, ...Array(maxLength - row.length).fill('')]
+  );
+  return padded[0].map((_, colIndex) => padded.map(row => row[colIndex]));
 };
 
-/**
-* rowsToFile: Convierte un array de arrays (de las filas) en el contenido de un CSV (string). 
- */
-const rowsToFile = (rows) => {
-  return rows.map(row => row.join(', ')).join('\n')
-}
+// Intercambia columnas de lugar en un array de clearcolumnas.
+const swapColumns = (columns, i, j) => {
+  const cols = [...columns]; // Copia para no modificar original
+  [cols[i], cols[j]] = [cols[j], cols[i]];
+  return cols;
+};
 
-/**
-* columnsToRows: Convierte un array de arrays, donde cada array representa una columna; en un array de arrays de las filas.
- */
-const columnsToRows = (columns) => {
-  let column = columns[0]
-  return column.map((_, i) => columns.map(column => column[i])); // Por cada valor i de la columna (total de filas), retorna un array con los valores [i] de cada columna
-}
+// Renderiza una celda en una tabla HTML.
+const tdRenderCell = (cell) => `\t\t<td>${cell}</td>`;
 
-function columnstorows(file) {
-  return rowsToFile(rowsToColumns(getRows(file)))
-}
+// Renderiza una fila en una tabla HTML.
+const trRenderRow = (row) =>
+  '\t<tr>\n' +
+  row.map(tdRenderCell).join('\n') +
+  '\n\t</tr>';
 
-/**
-* rowsToColumns: Convierte un array de arrays, donde cada array representa una fila; en un array de arrays de las columnas.
- */
-const rowsToColumns = (rows) => {
-  let row = rows[0]
-  return row.map((_, i) => rows.map(row => row[i]))
-}
+// Ubica las filas recibidas en una tabla HTML.
+const wrapTable = (rows) => `<table>\n${rows}\n</table>`;
 
-function rowstocolumns(file) {
-  return rowsToFile(rowsToColumns(getRows(file)))
-}
+/***************************** FUNCIONES DEL ENUNCIADO  *****************************/
 
-/**
- * swap (file, n, m) - hace un swap de las columnas n y m
- */
-function swap(file, n, m) {
-  n--; m--;
-  let columns = rowsToColumns(getRows(file));
-  let aux = columns[m];
-  columns[m] = columns[n];
-  columns[n] = aux;
-  return rowsToFile(columnsToRows(columns));
-}
+// Transpone el CSV (cambia filas por columnas o al revés).
+const rowsToColumns = flow(parseCSV, transpose, toCSV);
+const columnsToRows = flow(parseCSV, transpose, toCSV);
 
+// Intercambia de columnas n y m en el CSV.
+const swap = (csv, n, m) => flow(
+  parseCSV,
+  transpose,
+  cols => swapColumns(cols, n - 1, m - 1),
+  transpose,
+  toCSV
+)(csv);
 
-/**
- * insertcolumn: Inserta una columna en el CSV en la posición indicada.
- * 
- * Se implementa de forma curried para permitir partial evaluation y se utiliza
- * lodash chaining (que funciona como un pipe) para componer la transformación:
- * 
- * 1. Transforma el CSV a matriz usando parseCSV.
- * 2. Mapea cada fila insertando el valor correspondiente de la columna.
- * 3. Convierte la matriz resultante a CSV.
- */
-const insertcolumn = _.curry((csv, n, column) =>
-  _.chain(csv)
-    .thru(parseCSV)
-    .map((row, i) => [
-      ...row.slice(0, n),       // toma desde el inicio hasta la posición n (exclusivo)
-      column[i] ?? '',          // inserta el valor, o '' si no existe
-      ...row.slice(n)           // continua con el resto de la fila
-    ])
-    .thru(toCSV)
-    .value()
-);
+// Elimina una fila del CSV en la posición indicada.
+const rowDelete = curry((csv, n) => flow(
+  parseCSV,
+  (rows) => rows.filter((_, i) => i !== n - 1), // Filtra todas las filas, excepto la fila n
+  toCSV
+)(csv));
 
-/**
- * tohtmltable: Convierte el CSV en una tabla HTML.
- * 
- * Utiliza lodash chaining para:
- * 1. Parsear el CSV a matriz.
- * 2. Mapear cada fila a un string con formato HTML.
- * 3. Juntar las filas e incluirlas en la etiqueta <table>.
- */
-const tohtmltable = _.curry((csv) =>
-  _.chain(csv)
-    .thru(parseCSV)
-    .map(row =>
-      '\t<tr>\n' +
-      row.map(cell => `\t\t<td>${cell}</td>`).join('\n') +
-      '\n\t</tr>'
-    )
-    .join('\n')
-    .thru(rows => `<table>\n${rows}\n</table>`)
-    .value()
-);
+// Elimina una columna del CSV en la posición indicada.
+const columnDelete = curry((csv, n) => flow(
+  parseCSV,
+  map(row => [
+    ...row.slice(0, n - 1), // Toma desde el inicio hasta la posición n (exclusivo)
+    ...row.slice(n) // Toma desde n+1 hasta el final, saltando la columna n
+  ]),
+  toCSV
+)(csv));
 
-/**
- * rowdelete: Elimina una fila del CSV en la posición indicada.
- * 
- * Se implementa de forma curried para permitir partial evaluation y se utiliza
- * lodash chaining para componer la transformación:
- * 
- * 1. Transforma el CSV a matriz usando parseCSV.
- * 2. Filtra la fila que se desea eliminar.
- * 3. Convierte la matriz resultante a CSV.
- */
-const rowdelete = _.curry((csv, n) =>
-  _.chain(csv)
-    .thru(parseCSV)
-    .filter((_, i) => i !== n)  // Filtra todas las filas excepto la fila n
-    .thru(toCSV)
-    .value()
-);
+// Inserta una fila en el CSV después de la posición indicada.
+const insertRow = curry((csv, n, newRow) => flow(
+  parseCSV,
+  matrix => [
+    ...matrix.slice(0, n), // Toma desde el inicio hasta la posición n (inclusive)
+    newRow,                    // Inserta la nueva fila
+    ...matrix.slice(n)     // Toma desde n+1 hasta el final
+  ],
+  toCSV
+)(csv));
 
-/**
- * columndelete: Elimina una columna del CSV en la posición indicada.
- * 
- * Se implementa de forma curried para permitir partial evaluation y se utiliza
- * lodash chaining para componer la transformación:
- * 
- * 1. Transforma el CSV a matriz usando parseCSV.
- * 2. Mapea cada fila eliminando la columna específica.
- * 3. Convierte la matriz resultante a CSV.
- */
-const columndelete = _.curry((csv, n) =>
-  _.chain(csv)
-    .thru(parseCSV)
-    .map(row => [
-      ...row.slice(0, n),       // toma desde el inicio hasta la posición n (exclusivo)
-      ...row.slice(n + 1)       // toma desde n+1 hasta el final, saltando la columna n
-    ])
-    .thru(toCSV)
-    .value()
-);
+// Inserta una columna en el CSV en la posición siguiente a la indicada.
+const insertColumn = curry((csv, n, column) => flow(
+  parseCSV,
+  (rows) => rows.map((row, i) => [
+    ...row.slice(0, n - 1),
+    column[i] ?? '',
+    ...row.slice(n - 1)
+  ]),
+  toCSV
+)(csv));
 
-/**
- * insertrow: Inserta una fila en el CSV después de la posición indicada.
- * 
- * Se implementa de forma curried para permitir partial evaluation y se utiliza
- * lodash chaining para componer la transformación:
- * 
- * 1. Transforma el CSV a matriz usando parseCSV.
- * 2. Divide la matriz en dos partes: antes y después de la posición n.
- * 3. Concatena las partes con la nueva fila en el medio.
- * 4. Convierte la matriz resultante a CSV.
- */
-const insertrow = _.curry((csv, n, row) =>
-  _.chain(csv)
-    .thru(parseCSV)
-    .thru(matrix => [
-      ...matrix.slice(0, n + 1),  // Toma desde el inicio hasta la posición n (inclusive)
-      row,                        // Inserta la nueva fila
-      ...matrix.slice(n + 1)      // Toma desde n+1 hasta el final
-    ])
-    .thru(toCSV)
-    .value()
+// Convierte el CSV en una tabla HTML.
+const toHtmlTable = flow(
+  parseCSV,
+  map(trRenderRow),
+  join('\n'),
+  wrapTable
 );
 
 module.exports = {
-  columnstorows,
-  rowstocolumns,
+  rowsToColumns,
+  columnsToRows,
   swap,
-  insertcolumn,
-  tohtmltable,
-  rowdelete,
-  columndelete,
-  insertrow
+  rowDelete,
+  columnDelete,
+  insertRow,
+  insertColumn,
+  toHtmlTable
 };
