@@ -8,13 +8,14 @@ const {
 function runTest(name, actual, expected) {
   const passed = actual === expected;
   const status = passed ? setGreen('[✔ PASSED]') : setRed('[✘ FAILED]');
-  console.log(`\n${status}\n${setBlue(name)}`);
+  console.log('=========================');
+  console.log(`${status}\n${setBlue(name)}`);
   if (!passed) {
     console.log('\nExpected:\n' + expected);
     console.log('\nActual:\n' + actual);
   } else{
-    console.log('-------------------------');
     console.log(actual);
+    console.log('-------------------------\n');
   }
 }
 
